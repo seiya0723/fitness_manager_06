@@ -1,0 +1,213 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>フィットネス</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css" integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous">
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+
+    {# flatpickr #}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ja.js"></script>
+
+
+
+
+    {# TODO:sortablejsで並び替えを実現する #}
+    {# 今回の並び替えの処理はgetlistで上から順にとっていくだけなので、inputタグを用意してsortの値を入れる必要はない。 #}
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+    <link rel="stylesheet" href="{% static 'fitness/css/home.css' %}">
+
+    <script src="{% static 'common/js/ajax.js' %}"></script>
+
+    <script src="{% static 'fitness/js/home.js' %}"></script>
+    <script src="{% static 'fitness/js/watch_and_timer.js' %}"></script>
+
+</head>
+<body>
+
+    <div class="row mx-0">
+
+        <div class="col-sm-6">
+            {# カレンダー #}
+            <div class="calender_header">
+                <div class="calender_link_area">
+                    <a href="?year={{ last_month.year }}&month={{ last_month.month }}"><i class="fas fa-angle-left"></i></a>
+                </div>
+
+                <form class="calender_form_area" action="" method="GET">
+                    <select name="year">
+                        {% for year in years %}
+                        <option value="{{ year }}"  {% if year == selected_date.year %}selected{% endif %}>{{ year }}年</option>
+                        {% endfor %}
+                    </select>
+                    <select name="month">
+                        {% for month in months %}
+                        <option value="{{ month }}" {% if month == selected_date.month %}selected{% endif %}>{{ month }}月</option>
+                        {% endfor %}
+                    </select>
+                    <input type="submit" value="検索">
+                </form>
+
+                <div class="calender_link_area">
+                    <a href="?year={{ next_month.year }}&month={{ next_month.month }}"><i class="fas fa-angle-right"></i></a>
+                </div>
+            </div>
+
+            <table class="calender">
+                <thead>
+                    <tr class="calender_head">
+                        <td>日</td>
+                        <td>月</td>
+                        <td>火</td>
+                        <td>水</td>
+                        <td>木</td>
+                        <td>金</td>
+                        <td>土</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for week_date in month_date %}
+                    <tr>
+                        {% for date in week_date %}
+                        <td>{{ date.day }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="col-sm-6">
+
+
+            <div class="container_area">
+                <h2>カテゴリ追加</h2>
+
+                <form action="{% url 'fitness:fitness_category' %}" method="POST">
+                    {% csrf_token %}
+                    <input type="text" name="name" placeholder="カテゴリ名">
+                    <input type="number" name="kcal" placeholder="1分あたりの消費カロリー">
+                    <input type="submit" value="送信">
+                </form>
+            </div>
+
+            <div class="container_area">
+                <h2>手動記録追加</h2>
+
+                <form action="" method="POST">
+                    {% csrf_token %}
+                    <input type="text" name="exe_dt">
+                    <select name="category">
+                        <option value="">カテゴリを選んでください</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="text" name="time" placeholder="00:00:00">
+                    <input type="submit" value="送信">
+                </form>
+            </div>
+
+
+
+            {# TODO:この部分は、フィットネスメニューを実行する時に表示させる #}
+            {# TODO:タイマーが切れた時、音声で通知する #}
+            {% comment %}
+            <h2>タイマー</h2>
+
+            <label><input id="timer_hour"   type="number" min="0" max="99" value="0">時間</label>
+            <label><input id="timer_minute" type="number" min="0" max="59" value="0">分</label>
+            <label><input id="timer_second" type="number" min="0" max="59" value="0">秒</label>
+            <div>
+                <input id="timer_start" type="button" value="スタート/一時停止">
+                <input id="timer_reset"  type="button" value="リセット" style="display:none;">
+            </div>
+            <div id="remain">00時間00分00秒</div>
+            {% endcomment %}
+
+
+            {# TODO:この部分は、フィットネスカテゴリを選んだ上で運動を始める #}
+            <div class="container_area">
+                <h2>ストップウォッチ</h2>
+
+                <select name="category">
+                    <option value="">フィットネスカテゴリを選んでください</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}">{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+
+                {# ここの部分は:で区切るべきではなかろうか？Ajaxで送信する時、正規表現が必要になり、やや複雑になると思われる。 #}
+                <div id="progress"></div>
+
+                <input id="watch_start" type="button" value="スタート/一時停止">
+                <input id="watch_rap"   type="button" value="ラップ" style="display:none;">
+                <input id="watch_reset" type="button" value="リセット" style="display:none;">
+
+                <div id="rap_area"></div>
+            </div>
+
+
+            <div class="container_area">
+
+                {# TODO:フィットネスメニュー新規作成 #}
+                <h2>フィットネスメニュー新規作成</h2>
+
+                {# ↓MenuDetailのフォームの原型。これをJSで#menu_detail_create_formに追加する #}
+                <div id="menu_detail_create_init" class="menu_detail_create_init">
+
+                    <div class="menu_detail_create_row">
+                        <i class="fas fa-bars handle"></i>
+                        <select name="category">
+                            <option value="">フィットネスカテゴリを選んでください</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <input type="text" name="time" placeholder="00:00:00">
+                        <input class="menu_detail_create_delete" type="button" value="削除">
+                        <input type="hidden" name="id" value="">
+                    </div>
+                </div>
+                <form action="{% url 'fitness:menu' %}" method="POST">
+                    {% csrf_token %}
+                    {# ↓Menuのフォーム #}
+                    <input type="text" name="name" placeholder="メニュー名">
+
+                    {# TODO:追加ボタンは編集時にも使うので、class名に変更 #}
+                    <input class="menu_detail_create_row_add" type="button" value="追加">
+                    <div class="menu_detail_create_form">
+                        {# ここにDetailフォームが追加される。 #}
+                    </div>
+
+                    <input id="menu_create_submit" type="button" value="送信">
+                </form>
+            </div>
+
+            <div class="container_area">
+                {# TODO:ここにフィットネスメニュー一覧を表示、削除と編集を受け付ける。 #}
+                <h2>フィットネスメニュー一覧</h2>
+                <div id="fitness_menu_area">
+                    {% include "fitness/fitness_menu.html" %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>
+
+
+
+
+
+
+
